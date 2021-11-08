@@ -2,7 +2,7 @@ import './sass/main.scss';
 import ImagesApiService from './apiService';
 import cardGallery from './templates/cardGallery.hbs';
 import * as basicLightbox from 'basiclightbox';
-import { error } from '../node_modules/@pnotify/core/dist/PNotify.js';
+import { error, info } from '../node_modules/@pnotify/core/dist/PNotify.js';
 import '@pnotify/core/dist/BrightTheme.css';
 
 const refs = {
@@ -10,7 +10,7 @@ const refs = {
   gallery: document.querySelector('.gallery'),
   anchor: document.querySelector('#anchor'),
 };
-let total = 0;
+let showMsg = 0;
 const imagesApiService = new ImagesApiService();
 const render = async () => {
   const fetchImg = await imagesApiService.fetchImages();
@@ -44,12 +44,24 @@ function searchImages(event) {
 
 function appendImages(images) {
   refs.gallery.insertAdjacentHTML('beforeend', cardGallery(images));
-  total = images.total;
   refs.searchForm.query.value = '';
+  if (showMsg === 0) {
+    info({
+      title: 'Search result',
+      text: `${images.total} images found!`,
+      closer: false,
+      sticker: false,
+      hide: true,
+      delay: 1000,
+      remove: true,
+    });
+  }
+  showMsg = 1;
 }
 
 function clearGallery() {
   refs.gallery.innerHTML = '';
+  showMsg = 0;
 }
 
 const onLoadMore = entries => {

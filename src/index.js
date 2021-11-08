@@ -2,7 +2,7 @@ import './sass/main.scss';
 import ImagesApiService from './apiService';
 import cardGallery from './templates/cardGallery.hbs';
 import * as basicLightbox from 'basiclightbox';
-import { error, info } from '../node_modules/@pnotify/core/dist/PNotify.js';
+import { error } from '../node_modules/@pnotify/core/dist/PNotify.js';
 import '@pnotify/core/dist/BrightTheme.css';
 
 const refs = {
@@ -10,12 +10,17 @@ const refs = {
   gallery: document.querySelector('.gallery'),
   anchor: document.querySelector('#anchor'),
 };
+let total = 0;
 const imagesApiService = new ImagesApiService();
+const render = async () => {
+  const fetchImg = await imagesApiService.fetchImages();
+  const appendImg = appendImages(fetchImg);
+}
 
 refs.searchForm.addEventListener('submit', searchImages);
 refs.gallery.addEventListener('click', onClick);
 
-async function searchImages(event) {
+function searchImages(event) {
   event.preventDefault();
   imagesApiService.query = event.currentTarget.elements.query.value;
 
@@ -26,31 +31,21 @@ async function searchImages(event) {
       closer: false,
       sticker: false,
       hide: true,
-      delay: 500,
+      delay: 1000,
       remove: true,
     });
     return;
   }
   imagesApiService.resetPage();
   clearGallery();
-  imagesApiService.fetchImages().then(images => {
-    appendImages(images);
-    imagesApiService.incrementPage();
-  });
+  render();
+  imagesApiService.incrementPage();
 }
 
 function appendImages(images) {
   refs.gallery.insertAdjacentHTML('beforeend', cardGallery(images));
+  total = images.total;
   refs.searchForm.query.value = '';
-  info({
-    title: 'Search result',
-    text: `${images.total} images found`,
-    closer: false,
-    sticker: false,
-    hide: true,
-    delay: 500,
-    remove: true,
-  });
 }
 
 function clearGallery() {
@@ -60,13 +55,12 @@ function clearGallery() {
 const onLoadMore = entries => {
   entries.forEach(entry => {
     if (entry.isIntersecting && imagesApiService.query !== '') {
-      imagesApiService.fetchImages().then(images => {
-        appendImages(images);
-        imagesApiService.incrementPage();
-      });
+      render();
+      imagesApiService.incrementPage();
     }
   });
-};
+}
+
 const options = {
   rootMargin: '120px',
   threshold: 1,
